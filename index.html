@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Order Tracking</title>
+<style>
+body {
+  font-family: sans-serif;
+}
+
+.order-container {
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.order-status {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.timer-container {
+  margin-top: 10px;
+}
+
+.timer {
+  font-size: 1.5em;
+}
+
+.date {
+  font-size: 1em;
+  margin-top: 5px;
+}
+
+.tracking-id {
+  font-size: 0.9em;
+  margin-top: 5px;
+  color: #888;
+}
+</style>
+</head>
+<body>
+
+<h1>Order Tracking</h1>
+
+<div id="order-list">
+  </div>
+
+<script>
+const orderData = [
+  { id: 1, trackingId: 'BH80003', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 2, trackingId: 'QA80033', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 3, trackingId: 'QA80032', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 4, trackingId: 'QA80034', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 5, trackingId: 'QA80035', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 6, trackingId: 'QA80036', orderTime: "Janurary 4, 2025 24:00:00" },
+  { id: 7, trackingId: 'QA80038', orderTime: "Janurary 9, 2025 24:00:00" },
+  { id: 8, trackingId: 'QA80037', orderTime: "Janurary 9, 2025 24:00:00" },
+  { id: 9, trackingId: 'KW80009', orderTime: "Janurary 9, 2025 24:00:00" },
+  { id: 10, trackingId: 'UAE80010', orderTime: "Janurary 9, 2025 24:00:00" },
+//   { id: 11, trackingId: 'ORD353637', orderTime: "December 26, 2023 01:35:00" },
+//   { id: 12, trackingId: 'ORD383940', orderTime: "December 25, 2023 06:20:00" },
+//   { id: 13, trackingId: 'ORD414243', orderTime: "December 24, 2023 11:05:00" },
+//   { id: 14, trackingId: 'ORD444546', orderTime: "December 23, 2023 15:50:00" },
+//   { id: 15, trackingId: 'ORD474849', orderTime: "December 22, 2023 20:35:00" }
+];
+
+const orderStatusStages = [
+  "Order Received",
+  "Order Processing",
+  "Shipped",
+  "Out for Delivery",
+  "Delivered"
+];
+
+function createOrderCard(order) {
+  const orderContainer = document.createElement('div');
+  orderContainer.classList.add('order-container');
+
+  const orderStatus = document.createElement('div');
+  orderStatus.classList.add('order-status');
+  orderStatus.id = `order-status-${order.id}`; 
+  orderStatus.textContent = orderStatusStages[0];
+
+  const timerContainer = document.createElement('div');
+  timerContainer.classList.add('timer-container');
+
+  const timer = document.createElement('div');
+  timer.classList.add('timer');
+  timer.innerHTML = `
+    <span id="days-${order.id}"></span> days 
+    <span id="hours-${order.id}"></span> hours 
+    <span id="minutes-${order.id}"></span> minutes 
+    <span id="seconds-${order.id}"></span> seconds`;
+
+  const date = document.createElement('div');
+  date.classList.add('date');
+  date.id = `date-${order.id}`;
+
+  const trackingId = document.createElement('div');
+  trackingId.classList.add('tracking-id');
+  trackingId.textContent = `Tracking ID: ${order.trackingId}`;
+
+  timerContainer.appendChild(timer);
+  timerContainer.appendChild(date);
+  orderContainer.appendChild(orderStatus);
+  orderContainer.appendChild(timerContainer);
+  orderContainer.appendChild(trackingId);
+
+  return orderContainer;
+}
+
+function updateOrder(order) {
+  const countDownDate = new Date(order.orderTime).getTime();
+  const orderId = order.id;
+
+  const updateTimer = setInterval(function() {
+    const now = new Date().getTime();
+    const distance = countDownDate - now;
+
+    // Time calculations
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    // Update timer display
+    document.getElementById(`days-${orderId}`).innerHTML = days;
+    document.getElementById(`hours-${orderId}`).innerHTML = hours;
+    document.getElementById(`minutes-${orderId}`).innerHTML = minutes;
+    document.getElementById(`seconds-${orderId}`).innerHTML = seconds;
+
+    // Update date display
+    const currentDate = new Date();
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    document.getElementById(`date-${orderId}`).innerHTML = currentDate.toLocaleDateString('en-US', options);
+
+    // Update order status
+    let currentStatusIndex = 0;
+    if (distance < countDownDate * 0.75) { 
+      currentStatusIndex = 1;
+    } else if (distance < countDownDate * 0.5) { 
+      currentStatusIndex = 2;
+    } else if (distance < countDownDate * 0.25) { 
+      currentStatusIndex = 3;
+    } else if (distance < 0) {
+      clearInterval(updateTimer);
+      currentStatusIndex = 4; 
+    }
+    document.getElementById(`order-status-${orderId}`).innerHTML = orderStatusStages[currentStatusIndex];
+
+  }, 1000);
+}
+
+const orderList = document.getElementById('order-list');
+
+orderData.forEach(order => {
+  const orderCard = createOrderCard(order);
+  orderList.appendChild(orderCard);
+  updateOrder(order);
+});
+
+</script>
+
+</body>
+</html>
